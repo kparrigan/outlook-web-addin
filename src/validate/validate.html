@@ -3,20 +3,26 @@
 <head>
     <!-- Office JavaScript API -->
     <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+    <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.2.1.min.js"></script>
 
     <!-- For more information on Office UI Fabric, visit https://developer.microsoft.com/fabric. -->
     <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/9.6.1/css/fabric.min.css"/>
-    <title>Title</title>
+    <script>
+        Office.initialize = function () {
+            $('#btnSend').click(btnSendClick);
+            $('#btnCancel').click(btnCancelClick);
+        };
+    </script>
 </head>
 <body>
     <p class="ms-font-xl ms-fontColor-neutralSecondary ms-fontWeight-semilight">This email contains external recipients. Are you sure you want to send it?</p>
-    <button class="ms-Button ms-Button--primary" id="button1">
+    <button class="ms-Button ms-Button--primary" id="btnSend">
         <span class="ms-Button-icon"><i class="ms-Icon ms-Icon--plus"></i></span>
-        <span class="ms-Button-label" id="button1-text">Send</span>
+        <span class="ms-Button-label" id="btnSend-text">Send</span>
     </button>
-    <button class="ms-Button ms-Button--primary" id="button2">
+    <button class="ms-Button ms-Button--primary" id="btnCancel">
         <span class="ms-Button-icon"><i class="ms-Icon ms-Icon--plus"></i></span>
-        <span class="ms-Button-label" id="button2-text">Cancel</span>
+        <span class="ms-Button-label" id="btnCancel-text">Cancel</span>
     </button>
 </body>
 </html>

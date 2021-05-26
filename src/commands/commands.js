@@ -4,18 +4,18 @@
  */
 
 /* global global, Office, self, window */
-
-var mailboxItem;
-
 Office.onReady(() => {
   // If needed, Office.js is ready to be called
-  mailboxItem = Office.context.mailbox.item;
 });
 
 /**
  * Shows a notification when the add-in command is executed.
  * @param event {Office.AddinCommands.Event}
  */
+
+var dialog;
+var sendEvent;
+
 function action(event) {
   const message = {
     type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
@@ -32,8 +32,49 @@ function action(event) {
 }
 
 function validateRecipients(event) {
-  Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 10, width: 20, promptBeforeOpen: false});
-  event.completed({ allowEvent: false });
+  sendEvent = event;
+
+  var item = Office.context.mailbox.item;
+  item.to.getAsync(function (asyncResult) {
+      if (asyncResult.status !== Office.AsyncResultStatus.Succeeded) {
+          event.completed({ allowEvent: true });
+      }
+      else {
+          var recipients = asyncResult.value;
+          var hasExternal = false;
+
+          for (var i = 0; i < recipients.length; i++) {
+            if (recipients[i].recipientType === "externalUser") {
+              hasExternal = true;
+              break;
+            }
+          }
+
+          if (hasExternal) {
+            Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 12, width: 20, promptBeforeOpen: false},
+            function (result) {
+              dialog = result.value;
+              dialog.addEventHandler(Office.EventType.DialogMessageReceived, processMessage);
+            });
+          } 
+          else {
+            event.completed({ allowEvent: true });
+          }
+      }
+  });
+}
+
+function btnSendClick() {
+  Office.context.ui.messageParent(true);
+}
+
+function btnCancelClick() {
+  Office.context.ui.messageParent(false);
+}
+
+function processMessage(event) {
+  var allow = event.message ? true : false;
+  sendEvent.completed({ allowEvent: allow });
 }
 
 function getGlobal() {
@@ -51,3 +92,5 @@ const g = getGlobal();
 // the add-in command functions need to be available in global scope
 g.action = action;
 g.validateRecipients = validateRecipients;
+g.btnSendClick = btnSendClick;
+g.btnCancelClick = btnCancelClick;
