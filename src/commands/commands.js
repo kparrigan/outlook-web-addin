@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
  * See LICENSE in the project root for license information.
  */
@@ -74,6 +75,13 @@ function btnCancelClick() {
 
 function processMessage(event) {
   var allow = event.message ? true : false;
+
+  if (!allow)
+  {
+    var item = Office.context.mailbox.item;
+    item.close();
+  }
+
   sendEvent.completed({ allowEvent: allow });
 }
 
