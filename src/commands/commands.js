@@ -35,34 +35,73 @@ function action(event) {
 function validateRecipients(event) {
   sendEvent = event;
 
-  var item = Office.context.mailbox.item;
-  item.to.getAsync(function (asyncResult) {
-      if (asyncResult.status !== Office.AsyncResultStatus.Succeeded) {
-          event.completed({ allowEvent: true });
-      }
-      else {
-          var recipients = asyncResult.value;
-          var hasExternal = false;
+  let item = Office.context.mailbox.item;
+  let toRecipientPromise = getToRecipients(item);
+  let ccRecipientPromise = getCcRecipients(item);
+  let bccRecipientPromise = getBccRecipients(item);
 
-          for (var i = 0; i < recipients.length; i++) {
-            if (recipients[i].recipientType === "externalUser") {
-              hasExternal = true;
-              break;
-            }
-          }
+  Promise.all([toRecipientPromise, ccRecipientPromise, bccRecipientPromise]).then((promises) => {
+    let hasExternal = false;
 
-          if (hasExternal) {
-            Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 12, width: 20, promptBeforeOpen: false},
-            function (result) {
-              dialog = result.value;
-              dialog.addEventHandler(Office.EventType.DialogMessageReceived, processMessage);
-            });
-          } 
-          else {
-            event.completed({ allowEvent: true });
-          }
+    const combinedRecipients = [...promises[0],...promises[1],...promises[2]];
+
+    for (let i = 0; i < combinedRecipients.length; i++) {
+      if (combinedRecipients[i].recipientType === "externalUser") {
+        hasExternal = true;
+        break;
       }
+    }
+
+    if (hasExternal) {
+      Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 12, width: 20, promptBeforeOpen: false},
+      function (result) {
+        dialog = result.value;
+        dialog.addEventHandler(Office.EventType.DialogMessageReceived, processMessage);
+      });
+    } 
+    else {
+      event.completed({ allowEvent: true });
+    }
   });
+}
+
+function getToRecipients(item) {
+    return new Office.Promise(function (resolve, reject) {
+      try {
+        item.to.getAsync(function (asyncResult) {
+              resolve(asyncResult.value);
+          });
+      }
+      catch (error) {
+          reject(error);
+      }
+  })
+}
+
+function getCcRecipients(item) {
+    return new Office.Promise(function (resolve, reject) {
+      try {
+        item.cc.getAsync(function (asyncResult) {
+              resolve(asyncResult.value);
+          });
+      }
+      catch (error) {
+          reject(error);
+      }
+  })
+}
+
+function getBccRecipients(item) {
+  return new Office.Promise(function (resolve, reject) {
+    try {
+      item.bcc.getAsync(function (asyncResult) {
+            resolve(asyncResult.value);
+        });
+    }
+    catch (error) {
+        reject(error);
+    }
+})
 }
 
 function btnSendClick() {
@@ -74,11 +113,11 @@ function btnCancelClick() {
 }
 
 function processMessage(event) {
-  var allow = event.message ? true : false;
+  let allow = event.message ? true : false;
 
   if (!allow)
   {
-    var item = Office.context.mailbox.item;
+    let item = Office.context.mailbox.item;
     item.close();
   }
 
