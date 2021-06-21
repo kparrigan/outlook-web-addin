@@ -53,7 +53,7 @@ function validateRecipients(event) {
     }
 
     if (hasExternal) {
-      Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 20, width: 30, promptBeforeOpen: false},
+      Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 18, width: 30, promptBeforeOpen: false},
       function (result) {
         dialog = result.value;
         dialog.addEventHandler(Office.EventType.DialogMessageReceived, processMessage);
@@ -114,14 +114,24 @@ function btnCancelClick() {
 
 function processMessage(event) {
   let allow = event.message ? true : false;
+  let item = Office.context.mailbox.item;
 
   if (!allow)
   {
-    let item = Office.context.mailbox.item;
     item.close();
+    sendEvent.completed({ allowEvent: false });
+  } 
+  else 
+  {
+    item.subject.getAsync(
+      {},
+      function(result) {
+          let subject = result.value;
+          item.subject.setAsync('[Secure] ' + subject, function() {
+            sendEvent.completed({ allowEvent: true });
+          })
+      })
   }
-
-  sendEvent.completed({ allowEvent: allow });
 }
 
 function getGlobal() {
