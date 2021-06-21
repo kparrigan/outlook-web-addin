@@ -53,7 +53,7 @@ function validateRecipients(event) {
     }
 
     if (hasExternal) {
-      Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 12, width: 20, promptBeforeOpen: false},
+      Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 20, width: 30, promptBeforeOpen: false},
       function (result) {
         dialog = result.value;
         dialog.addEventHandler(Office.EventType.DialogMessageReceived, processMessage);
