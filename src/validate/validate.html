@@ -7,35 +7,8 @@
 
     <!-- For more information on Office UI Fabric, visit https://developer.microsoft.com/fabric. -->
     <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/9.6.1/css/fabric.min.css"/>
-    <script>
-        //TODO Move all of this to code file
-        Office.initialize = function () {
-            $('#btnSend').click(btnSendClick);
-            $('#btnCancel').click(btnCancelClick);
 
-            Office.context.ui.addHandlerAsync(
-                Office.EventType.DialogParentMessageReceived,
-                onMessageFromParent);
-        };
-
-        function onMessageFromParent(event) {
-            const externalRecipients = JSON.parse(event.message);
-            let recipientList = "";
-
-            externalRecipients.forEach(function (item, index) {
-                recipientList += item;
-                console.log(item);
-                console.log(index);
-                if (index < externalRecipients.length - 1) {
-                    recipientList += ', '
-                }
-            });
-            
-            recipientList += '...';
-            console.log(recipientList);
-            $('#pRecipients').text(recipientList);
-        };        
-    </script>
+    <script type="text/javascript" src="validate.js"></script>
 </head>
 <body>
     <p class="ms-font-xl ms-fontColor-neutralSecondary ms-fontWeight-semilight">This email contains external recipients. Are you sure you want to send it?</p>

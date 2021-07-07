@@ -18,7 +18,8 @@ module.exports = async (env, options) => {
     entry: {
       polyfill: ["core-js/stable", "regenerator-runtime/runtime"],
       taskpane: "./src/taskpane/taskpane.js",
-      commands: "./src/commands/commands.js"
+      commands: "./src/commands/commands.js",
+      validate: "./src/validate/validate.js",
     },
     resolve: {
       extensions: [".ts", ".tsx", ".html", ".js"]
@@ -82,7 +83,7 @@ module.exports = async (env, options) => {
       new HtmlWebpackPlugin({
         filename: "validate.html",
         template: "./src/validate/validate.html",
-        chunks: ["polyfill", "commands"]
+        chunks: ["polyfill", "commands", "validate"]
       })      
     ],
     devServer: {
