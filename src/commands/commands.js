@@ -53,10 +53,15 @@ function validateRecipients(event) {
     }
 
     if (hasExternal) {
-      Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 18, width: 30, promptBeforeOpen: false},
+      Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 18, width: 30, promptBeforeOpen: false}, //TODO relative URLs are apparently not supported. Add non-hard-coded server path 
       function (result) {
         dialog = result.value;
         dialog.addEventHandler(Office.EventType.DialogMessageReceived, processMessage);
+        
+        const topRecipients = combinedRecipients.slice(0,3).map((item) => {return item.emailAddress;}); //TODO configurable slice length
+        const recipientString = JSON.stringify(topRecipients);
+
+        dialog.messageChild(recipientString);
       });
     } 
     else {

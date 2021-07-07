@@ -3,20 +3,43 @@
 <head>
     <!-- Office JavaScript API -->
     <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
-    <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.2.1.min.js"></script>
+    <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.min.js"></script>
 
     <!-- For more information on Office UI Fabric, visit https://developer.microsoft.com/fabric. -->
     <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/9.6.1/css/fabric.min.css"/>
     <script>
+        //TODO Move all of this to code file
         Office.initialize = function () {
             $('#btnSend').click(btnSendClick);
             $('#btnCancel').click(btnCancelClick);
+
+            Office.context.ui.addHandlerAsync(
+                Office.EventType.DialogParentMessageReceived,
+                onMessageFromParent);
         };
+
+        function onMessageFromParent(event) {
+            const externalRecipients = JSON.parse(event.message);
+            let recipientList = "";
+
+            externalRecipients.forEach(function (item, index) {
+                recipientList += item;
+                console.log(item);
+                console.log(index);
+                if (index < externalRecipients.length - 1) {
+                    recipientList += ', '
+                }
+            });
+            
+            recipientList += '...';
+            console.log(recipientList);
+            $('#pRecipients').text(recipientList);
+        };        
     </script>
 </head>
 <body>
     <p class="ms-font-xl ms-fontColor-neutralSecondary ms-fontWeight-semilight">This email contains external recipients. Are you sure you want to send it?</p>
-    <p class="ms-font-l ms-fontColor-neutralSecondary ms-fontWeight-semilight" id=pRecipients>kyle.parrigan@gmail.com, kyle.parrigan@foo.com, kyle.parrigan@bar.com...</p>
+    <p class="ms-font-l ms-fontColor-neutralSecondary ms-fontWeight-semilight" id=pRecipients></p>
     <button class="ms-Button ms-Button--primary" id="btnSend">
         <span class="ms-Button-icon"><i class="ms-Icon ms-Icon--plus"></i></span>
         <span class="ms-Button-label" id="btnSend-text">Send</span>
