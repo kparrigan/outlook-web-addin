@@ -9,14 +9,6 @@ Office.onReady(() => {
   // If needed, Office.js is ready to be called
 });
 
-/**
- * Shows a notification when the add-in command is executed.
- * @param event {Office.AddinCommands.Event}
- */
-
-var dialog;
-var sendEvent;
-
 function action(event) {
   const message = {
     type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
@@ -32,42 +24,95 @@ function action(event) {
   event.completed();
 }
 
+var dialog;
+var sendEvent;
+
 function validateRecipients(event) {
-  sendEvent = event;
 
-  let item = Office.context.mailbox.item;
-  let toRecipientPromise = getToRecipients(item);
-  let ccRecipientPromise = getCcRecipients(item);
-  let bccRecipientPromise = getBccRecipients(item);
+  if (Office.context.requirements.isSetSupported("MailBox", "1.9"))
+  {
+    sendEvent = event;
 
-  Promise.all([toRecipientPromise, ccRecipientPromise, bccRecipientPromise]).then((promises) => {
-    let hasExternal = false;
-
-    const combinedRecipients = [...promises[0],...promises[1],...promises[2]];
-
-    for (let i = 0; i < combinedRecipients.length; i++) {
-      if (combinedRecipients[i].recipientType === "externalUser") {
-        hasExternal = true;
-        break;
-      }
-    }
-
-    if (hasExternal) {
-      Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 18, width: 30, promptBeforeOpen: false}, //TODO relative URLs are apparently not supported. Add non-hard-coded server path 
-      function (result) {
-        dialog = result.value;
-        dialog.addEventHandler(Office.EventType.DialogMessageReceived, processMessage);
-        
-        const topRecipients = combinedRecipients.slice(0,3).map((item) => {return item.emailAddress;}); //TODO configurable slice length
-        const recipientString = JSON.stringify(topRecipients);
-
-        dialog.messageChild(recipientString);
+    let item = Office.context.mailbox.item;
+  
+    if (item.itemType === "message")
+    {
+      let toRecipientPromise = getToRecipients(item);
+      let ccRecipientPromise = getCcRecipients(item);
+      let bccRecipientPromise = getBccRecipients(item);
+    
+      Promise.all([toRecipientPromise, ccRecipientPromise, bccRecipientPromise]).then((promises) => {  
+        const combinedRecipients = [...promises[0],...promises[1],...promises[2]];
+        let externalRecipients = getExternalRecipients(combinedRecipients);
+        handleDialog(externalRecipients, event);
       });
-    } 
-    else {
-      event.completed({ allowEvent: true });
     }
-  });
+    else if (item.itemType === "appointment")
+    {
+      let requiredRecipientPromise = getRequiredAttendees(item);
+      let optionalRecipientPromise = getOptionalAttendees(item);
+    
+      Promise.all([requiredRecipientPromise, optionalRecipientPromise]).then((promises) => {
+        const combinedRecipients = [...promises[0],...promises[1]];
+        let externalRecipients = getExternalRecipients(combinedRecipients);
+        handleDialog(externalRecipients, event);
+      });
+    }
+  }
+}
+
+function handleDialog(externaRecipients, event) {
+  if (externaRecipients.length > 0) {
+    Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 18, width: 30, promptBeforeOpen: false, displayInIframe: true}, //TODO relative URLs are apparently not supported. Add non-hard-coded server path 
+    function (result) {
+      dialog = result.value;
+      dialog.addEventHandler(Office.EventType.DialogMessageReceived, processMessage);
+      
+      const topRecipients = externaRecipients.slice(0,3).map((item) => {return item.emailAddress;}); //TODO configurable slice length
+      const recipientString = JSON.stringify(topRecipients);
+      dialog.messageChild(recipientString);
+    });
+  } 
+  else {
+    event.completed({ allowEvent: true });
+  }
+}
+
+function getExternalRecipients(recipients) {
+  let externalRecipients = [];
+  for (let i = 0; i < recipients.length; i++) {
+    if (recipients[i].recipientType === "externalUser") {
+      externalRecipients.push(recipients[i]);
+    }
+  }
+
+  return externalRecipients;
+}
+
+function getRequiredAttendees(item) {
+  return new Office.Promise(function (resolve, reject) {
+    try {
+      item.requiredAttendees.getAsync(function (asyncResult) {
+            resolve(asyncResult.value);
+        });
+    }
+    catch (error) {
+        reject(error);
+    }
+})
+}
+
+function getOptionalAttendees(item) {
+    return new Office.Promise(function (resolve, reject) {
+      try {
+        item.optionalAttendees.getAsync(function (asyncResult) {
+              resolve(asyncResult.value);
+          });
+      }
+      catch (error) {
+          reject(error);
+      }
+  })
 }
 
 function getToRecipients(item) {
