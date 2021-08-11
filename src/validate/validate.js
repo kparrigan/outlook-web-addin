@@ -1,20 +1,8 @@
 Office.onReady(() => {
+    $('#btnSend').click(btnSendClick);
+    $('#btnCancel').click(btnCancelClick);
 
-    Office.context.ui.addHandlerAsync(
-        Office.EventType.DialogParentMessageReceived,
-        onMessageFromParent);
-    
-    $(document).ready(function () {
-        $('#btnSend').click(btnSendClick);
-        $('#btnCancel').click(btnCancelClick);
-
-        console.log('ready');
-    });    
-});
-
-function onMessageFromParent(event) {
-    const externalRecipients = JSON.parse(event.message);
-    console.log(event.message);
+    const externalRecipients = JSON.parse(window.localStorage.getItem('recipients'));
     let recipientList = "";
 
     externalRecipients.forEach(function (item, index) {
@@ -23,7 +11,7 @@ function onMessageFromParent(event) {
             recipientList += ', '
         }
     });
-    
+
     recipientList += '...';
     $('#pRecipients').text(recipientList);
-};    
+});

@@ -29,7 +29,7 @@ var sendEvent;
 
 function validateRecipients(event) {
 
-  if (Office.context.requirements.isSetSupported("MailBox", "1.9"))
+  if (Office.context.requirements.isSetSupported("MailBox", "1.3") && Office.context.requirements.isSetSupported("DialogApi", "1.2") )
   {
     sendEvent = event;
 
@@ -63,14 +63,15 @@ function validateRecipients(event) {
 
 function handleDialog(externaRecipients, event) {
   if (externaRecipients.length > 0) {
-    Office.context.ui.displayDialogAsync('https://localhost:3000/validate.html', { height: 18, width: 30, promptBeforeOpen: false, displayInIframe: true}, //TODO relative URLs are apparently not supported. Add non-hard-coded server path 
+    
+    const topRecipients = externaRecipients.slice(0,3).map((item) => {return item.emailAddress;}); //TODO configurable slice length
+    const recipientString = JSON.stringify(topRecipients);
+    window.localStorage.setItem('recipients', recipientString);
+
+    Office.context.ui.displayDialogAsync(window.location.origin + '/validate.html', { height: 18, width: 30, promptBeforeOpen: false, displayInIframe: true}, 
     function (result) {
       dialog = result.value;
       dialog.addEventHandler(Office.EventType.DialogMessageReceived, processMessage);
-      
-      const topRecipients = externaRecipients.slice(0,3).map((item) => {return item.emailAddress;}); //TODO configurable slice length
-      const recipientString = JSON.stringify(topRecipients);
-      dialog.messageChild(recipientString);
     });
   } 
   else {
@@ -90,16 +91,16 @@ function getExternalRecipients(recipients) {
 }
 
 function getRequiredAttendees(item) {
-  return new Office.Promise(function (resolve, reject) {
-    try {
-      item.requiredAttendees.getAsync(function (asyncResult) {
-            resolve(asyncResult.value);
-        });
-    }
-    catch (error) {
-        reject(error);
-    }
-})
+    return new Office.Promise(function (resolve, reject) {
+      try {
+        item.requiredAttendees.getAsync(function (asyncResult) {
+              resolve(asyncResult.value);
+          });
+      }
+      catch (error) {
+          reject(error);
+      }
+  })
 }
 
 function getOptionalAttendees(item) {
